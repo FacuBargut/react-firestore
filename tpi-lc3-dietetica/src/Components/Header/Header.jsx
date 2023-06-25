@@ -7,11 +7,26 @@ import NavDropdown from 'react-bootstrap/NavDropdown';
 import './Header.css';
 import logo from '../../assets/logos/logo.png';
 import { FaShoppingCart } from 'react-icons/fa';
-import { Link, NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { getAuth, signOut } from 'firebase/auth';
+import firebaseApp from '../../firebase/credentials';
+
+import { useContext } from 'react';
+import UserContext from '../../context/userContext';
+const auth = getAuth(firebaseApp)
 
 
 
-function Header() {
+function Header(  ) {
+
+    const { user } = useContext(UserContext);
+
+
+    const handleEndSession = () => {
+        signOut(auth);
+      };
+
+
   return (
     <header>
         <Navbar bg="" expand="lg">
@@ -28,9 +43,21 @@ function Header() {
             >
                 <Nav.Link as={Link} to="/Store">Tienda</Nav.Link>
                 <NavDropdown title="Mi cuenta" id="navbarScrollingDropdown">
-                <NavDropdown.Item as={Link} to="/LogIn">Iniciar sesión</NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item as={Link} to="/CreateAccount">Crear cuenta</NavDropdown.Item>
+
+                { user === null ? (
+                    <>
+                    <NavDropdown.Item as={Link} to="/LogIn">Iniciar sesión</NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item as={Link} to="/CreateAccount">Crear cuenta</NavDropdown.Item>
+                    </>
+                ) : (
+                    <>
+                    <p> Hola {user.name}</p>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item as={Link} onClick={handleEndSession}  >Cerrar sesión</NavDropdown.Item>
+                    </>
+                )}   
+                
                 </NavDropdown>
                 <NavDropdown title="Nosotros" id="navbarScrollingDropdown">
                 <NavDropdown.Item as={Link} to="/AboutUs">Quiénes somos</NavDropdown.Item>

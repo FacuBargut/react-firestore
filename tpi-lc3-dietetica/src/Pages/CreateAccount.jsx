@@ -1,6 +1,9 @@
 import './Form.css';
-import { useForm } from '../Hooks/useForm';
-
+import { useState } from 'react';
+import firebaseApp from '../firebase/credentials';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { getFirestore, doc, setDoc } from 'firebase/firestore'
+const auth = getAuth(firebaseApp);
 
 const initialForm = { name: "", lastName: "", phone:"", email: "", password: "", confirmPassword: ""}
 
@@ -39,20 +42,61 @@ const CreateAccount = () => {
       if (form.confirmPassword != form.password) {
         errors.confirmPassword = 'Ambas contraseñas deben ser iguales'
       }
-
     return errors;
   }
 
-  const{success, form, errors, handleChange, handleSubmit} = useForm(initialForm, validationsForm);
-  
+  const [form , setForm] = useState(initialForm);
+  const [errors , setErrors] = useState({});
+  const [success , setSuccess] = useState(false);
+
+  async function registerUser( data ){
+    const firestore = getFirestore(firebaseApp);
+    const infoUser = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    const docuRef = doc(firestore, `users/${infoUser.user.uid}`);
+    setDoc(docuRef, {
+      name: data.name,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+      password: data.password,
+      rol: data.rol
+    })
+    // signOut( auth );
+    setSuccess(true);
+  }
+
+  const handleChange = (e) => {
+    const {name, value} = e.target;
+    setForm({...form, [name]:value});
+};
+
+  function submitHandler(e){
+    e.preventDefault();
+    handleChange(e);   
+    const errors = validationsForm(form);
+    setErrors(errors)
+
+    const data = {
+      name: form.name,
+      lastName: form.lastName,
+      email: form.email,
+      phone: form.phone,
+      password: form.password,
+      rol: 'user'
+    }
+    if(Object.keys(errors).length === 0) {   
+      registerUser( data );
+    }
+  }
   
   return (
     <div className="form-container">
       <h2>Crear cuenta</h2>
-        <form onSubmit={handleSubmit}>
+      {/* onSubmit={handleSubmit} */}
+        <form onSubmit={submitHandler}>
             <div className= "form-elements">
             <label id="name">Nombre</label>
-            <input type= "text" name= "name" value={form.name} onChange={handleChange} ></input>
+            <input type= "text" name= "name" value={form.name} onChange={handleChange}required></input>
             {errors.name && <p className="error-message">{errors.name}</p>}
             <label id="lastName">Apellido</label>
             <input type= "text" name= "lastName" value={form.lastName} onChange={handleChange} required></input>
